@@ -1,0 +1,623 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: profile
+    description: Current user profile
+  - name: event-types
+    description: Manage bookable event types
+  - name: availability
+    description: Manage weekly availability
+  - name: bookings
+    description: Manage bookings as a host
+  - name: public
+    description: Public booking page endpoints (no auth)
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /me:
+    get:
+      operationId: getMyProfile
+      tags: [profile]
+      summary: Get the current user's profile (creates one on first call)
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+    patch:
+      operationId: updateMyProfile
+      tags: [profile]
+      summary: Update the current user's profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdate"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+
+  /event-types:
+    get:
+      operationId: listMyEventTypes
+      tags: [event-types]
+      summary: List the current user's event types
+      responses:
+        "200":
+          description: Event types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EventType"
+    post:
+      operationId: createEventType
+      tags: [event-types]
+      summary: Create an event type
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventTypeInput"
+      responses:
+        "201":
+          description: Created event type
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventType"
+
+  /event-types/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      operationId: getEventType
+      tags: [event-types]
+      summary: Get an event type by id
+      responses:
+        "200":
+          description: Event type
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventType"
+    patch:
+      operationId: updateEventType
+      tags: [event-types]
+      summary: Update an event type
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventTypeUpdate"
+      responses:
+        "200":
+          description: Updated event type
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventType"
+    delete:
+      operationId: deleteEventType
+      tags: [event-types]
+      summary: Delete an event type
+      responses:
+        "204":
+          description: Deleted
+
+  /availability:
+    get:
+      operationId: listMyAvailability
+      tags: [availability]
+      summary: List the current user's weekly availability rules
+      responses:
+        "200":
+          description: Availability rules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AvailabilityRule"
+    put:
+      operationId: replaceMyAvailability
+      tags: [availability]
+      summary: Replace the current user's weekly availability rules
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AvailabilityRulesInput"
+      responses:
+        "200":
+          description: Updated availability rules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AvailabilityRule"
+
+  /bookings:
+    get:
+      operationId: listMyBookings
+      tags: [bookings]
+      summary: List bookings for the current user's event types
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/BookingStatusFilter"
+      responses:
+        "200":
+          description: Bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+
+  /bookings/{id}/cancel:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    post:
+      operationId: cancelBooking
+      tags: [bookings]
+      summary: Cancel a booking
+      responses:
+        "200":
+          description: Cancelled booking
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [bookings]
+      summary: Summary counts for the host dashboard
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /public/users/{username}:
+    parameters:
+      - name: username
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getPublicProfile
+      tags: [public]
+      summary: Get a public profile with active event types
+      responses:
+        "200":
+          description: Public profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicProfile"
+        "404":
+          description: Not found
+
+  /public/users/{username}/event-types/{slug}:
+    parameters:
+      - name: username
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getPublicEventType
+      tags: [public]
+      summary: Get a public event type by host username and slug
+      responses:
+        "200":
+          description: Public event type
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicEventType"
+        "404":
+          description: Not found
+
+  /public/slots:
+    get:
+      operationId: getPublicEventTypeSlots
+      tags: [public]
+      summary: Get bookable time slots for a date range in a given timezone
+      parameters:
+        - name: username
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: slug
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          required: true
+          description: Inclusive start date (YYYY-MM-DD)
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          required: true
+          description: Inclusive end date (YYYY-MM-DD)
+          schema:
+            type: string
+        - name: timezone
+          in: query
+          required: true
+          description: IANA timezone the caller wants slots expressed in
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Available slots grouped by date
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SlotDay"
+
+  /public/users/{username}/event-types/{slug}/book:
+    parameters:
+      - name: username
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      operationId: createPublicBooking
+      tags: [public]
+      summary: Book a time slot as a guest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingInput"
+      responses:
+        "201":
+          description: Created booking
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "409":
+          description: Slot is no longer available
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    Profile:
+      type: object
+      required: [id, username, name, timezone, createdAt]
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        name:
+          type: string
+        timezone:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    ProfileUpdate:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 40
+        name:
+          type: string
+          minLength: 1
+        timezone:
+          type: string
+          minLength: 1
+
+    EventType:
+      type: object
+      required: [id, userId, title, slug, description, durationMinutes, color, isActive, isPublic, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        title:
+          type: string
+        slug:
+          type: string
+        description:
+          type: ["string", "null"]
+        durationMinutes:
+          type: integer
+        color:
+          type: string
+        isActive:
+          type: boolean
+        isPublic:
+          type: boolean
+          description: If false, the event type is secret — bookable via direct link but not listed on the public profile page
+        createdAt:
+          type: string
+          format: date-time
+
+    EventTypeInput:
+      type: object
+      required: [title, durationMinutes]
+      properties:
+        title:
+          type: string
+          minLength: 1
+        slug:
+          type: string
+        description:
+          type: ["string", "null"]
+        durationMinutes:
+          type: integer
+          minimum: 5
+          maximum: 480
+        color:
+          type: string
+        isActive:
+          type: boolean
+        isPublic:
+          type: boolean
+
+    EventTypeUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        slug:
+          type: string
+        description:
+          type: ["string", "null"]
+        durationMinutes:
+          type: integer
+          minimum: 5
+          maximum: 480
+        color:
+          type: string
+        isActive:
+          type: boolean
+        isPublic:
+          type: boolean
+
+    AvailabilityRule:
+      type: object
+      required: [id, dayOfWeek, startTime, endTime]
+      properties:
+        id:
+          type: integer
+        dayOfWeek:
+          type: integer
+          minimum: 0
+          maximum: 6
+          description: 0 = Sunday .. 6 = Saturday
+        startTime:
+          type: string
+          description: "24h HH:mm in the host's timezone"
+        endTime:
+          type: string
+          description: "24h HH:mm in the host's timezone"
+
+    AvailabilityRuleInput:
+      type: object
+      required: [dayOfWeek, startTime, endTime]
+      properties:
+        dayOfWeek:
+          type: integer
+          minimum: 0
+          maximum: 6
+        startTime:
+          type: string
+        endTime:
+          type: string
+
+    AvailabilityRulesInput:
+      type: object
+      required: [rules]
+      properties:
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/AvailabilityRuleInput"
+
+    BookingStatusFilter:
+      type: string
+      enum: [upcoming, past, cancelled, all]
+
+    Booking:
+      type: object
+      required: [id, eventTypeId, eventTypeTitle, hostUserId, inviteeName, inviteeEmail, startTime, endTime, status, createdAt]
+      properties:
+        id:
+          type: integer
+        eventTypeId:
+          type: integer
+        eventTypeTitle:
+          type: string
+        hostUserId:
+          type: string
+        inviteeName:
+          type: string
+        inviteeEmail:
+          type: string
+        inviteeTimezone:
+          type: string
+        notes:
+          type: ["string", "null"]
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [confirmed, cancelled]
+        createdAt:
+          type: string
+          format: date-time
+
+    BookingInput:
+      type: object
+      required: [inviteeName, inviteeEmail, startTime, timezone]
+      properties:
+        inviteeName:
+          type: string
+          minLength: 1
+        inviteeEmail:
+          type: string
+          format: email
+        notes:
+          type: ["string", "null"]
+        startTime:
+          type: string
+          format: date-time
+          description: UTC ISO instant for the slot start
+        timezone:
+          type: string
+          description: IANA timezone the invitee is booking from
+
+    DashboardSummary:
+      type: object
+      required: [totalEventTypes, upcomingBookings, bookingsToday, bookingsThisWeek]
+      properties:
+        totalEventTypes:
+          type: integer
+        upcomingBookings:
+          type: integer
+        bookingsToday:
+          type: integer
+        bookingsThisWeek:
+          type: integer
+
+    PublicProfile:
+      type: object
+      required: [username, name, timezone, eventTypes]
+      properties:
+        username:
+          type: string
+        name:
+          type: string
+        timezone:
+          type: string
+        eventTypes:
+          type: array
+          items:
+            $ref: "#/components/schemas/PublicEventType"
+
+    PublicEventType:
+      type: object
+      required: [id, title, slug, description, durationMinutes, color, hostName, hostUsername, hostTimezone]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        slug:
+          type: string
+        description:
+          type: ["string", "null"]
+        durationMinutes:
+          type: integer
+        color:
+          type: string
+        hostName:
+          type: string
+        hostUsername:
+          type: string
+        hostTimezone:
+          type: string
+
+    SlotDay:
+      type: object
+      required: [date, slots]
+      properties:
+        date:
+          type: string
+          description: YYYY-MM-DD in the requested timezone
+        slots:
+          type: array
+          items:
+            type: string
+            format: date-time
+            description: UTC ISO instant for a bookable slot start

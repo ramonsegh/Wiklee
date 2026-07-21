@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Calendly"
+version = "1.0.0"
+id = "artifacts/calendly"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24996
+
+[services.development]
+run = "pnpm --filter @workspace/calendly run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/calendly", "run", "build" ]
+publicDir = "artifacts/calendly/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24996"
+BASE_PATH = "/"

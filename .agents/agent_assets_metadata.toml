@@ -1,0 +1,13 @@
+uploads = []
+
+[[generated]]
+id = "9CrQEO3iJtWwrsViWP96H"
+uri = "file://artifacts/calendly/public/logo.png"
+type = "image"
+title = "Calendly app minimal logo"
+
+[[outputs]]
+id = "XUwDEcIfQHXU0K5iinnXm"
+uri = "file://README.md"
+type = "text"
+title = "README.md — Wiklee Portfolio Documentation"
